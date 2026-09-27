@@ -1,0 +1,607 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>75 Hard</title>
+<meta name="description" content="Daily tracker for the 75 Hard challenge.">
+<meta name="theme-color" content="#16191D">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="75 Hard">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#EDEFEA; --surface:#FFFFFF; --sunk:#E3E6E0; --ink:#16191D; --muted:#5C646D; --line:#D3D8D0;
+  --accent:#2447D6; --accent-ink:#FFFFFF; --accent-soft:#DDE3FB;
+  --good:#167F55; --good-soft:#D6EEE2; --bad:#B8381C; --bad-soft:#F7DED6; --water:#1C7FB8;
+  --display:"Big Shoulders Display",Impact,"Arial Narrow",sans-serif;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#101317; --surface:#191D23; --sunk:#22272E; --ink:#E8EBEE; --muted:#97A0AA; --line:#2B313A;
+    --accent:#7A93FF; --accent-ink:#0C1020; --accent-soft:#232C4D;
+    --good:#43C18B; --good-soft:#173628; --bad:#F2795C; --bad-soft:#3D1F18; --water:#4FB3EA;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#101317; --surface:#191D23; --sunk:#22272E; --ink:#E8EBEE; --muted:#97A0AA; --line:#2B313A;
+  --accent:#7A93FF; --accent-ink:#0C1020; --accent-soft:#232C4D;
+  --good:#43C18B; --good-soft:#173628; --bad:#F2795C; --bad-soft:#3D1F18; --water:#4FB3EA;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+[hidden]{display:none!important}
+img{max-width:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--sans);padding-inline:max(16px,env(safe-area-inset-left,0px));padding-block:calc(20px + env(safe-area-inset-top,0px)) calc(48px + env(safe-area-inset-bottom,0px))}
+.wrap{max-width:1080px;margin:0 auto;display:grid;gap:20px}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+
+/* header */
+.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 24px}
+.big{display:flex;align-items:baseline;gap:10px;line-height:.85}
+.big .day{font:900 clamp(64px,14vw,120px)/.85 var(--display);letter-spacing:-.01em}
+.big .of{font:700 28px/1 var(--display);color:var(--muted);letter-spacing:.02em}
+.eyebrow{font:600 12px/1 var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.meta{display:grid;gap:6px;justify-items:end;text-align:right}
+.meta .dates{color:var(--muted);font-size:14px}
+.status{font:500 12px/1 var(--mono);color:var(--muted);display:inline-flex;align-items:center;gap:6px}
+.status i{width:7px;height:7px;border-radius:50%;background:var(--muted)}
+.status.cloud i{background:var(--good)}
+.status.err i{background:var(--bad)}
+.bar{height:6px;background:var(--sunk);border-radius:3px;overflow:hidden}
+.bar b{display:block;height:100%;background:var(--accent);transition:width .4s}
+
+/* banner */
+.banner{border:1px solid var(--bad);background:var(--bad-soft);border-radius:10px;padding:14px 16px;display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between}
+.banner.win{border-color:var(--good);background:var(--good-soft)}
+.banner p{margin:0;max-width:62ch}
+.banner strong{display:block}
+.row{display:flex;flex-wrap:wrap;gap:8px}
+
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 14px;font-weight:500}
+.btn:hover{border-color:var(--ink)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.danger{background:var(--bad);border-color:var(--bad);color:#fff}
+.btn.ghost{background:transparent}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* layout */
+.cols{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:820px){.cols{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px}
+.panel h2{margin:0;font:700 26px/1 var(--display);letter-spacing:.02em;text-transform:uppercase;text-wrap:balance}
+.side{display:grid;gap:20px}
+
+/* day header */
+.dayhead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+.dayhead .sub{color:var(--muted);font-size:14px;margin-top:4px}
+.nav{display:flex;gap:6px}
+.nav button{width:36px;height:36px;border-radius:8px;border:1px solid var(--line);background:var(--surface);font-size:18px;line-height:1}
+.chip{display:inline-block;font:600 12px/1 var(--sans);letter-spacing:.06em;text-transform:uppercase;padding:5px 8px;border-radius:5px;background:var(--sunk);color:var(--muted)}
+.chip.good{background:var(--good-soft);color:var(--good)}
+.chip.bad{background:var(--bad-soft);color:var(--bad)}
+
+/* tasks */
+.tasks{list-style:none;margin:0;padding:0;display:grid}
+.task{display:grid;grid-template-columns:44px minmax(0,1fr);gap:4px 14px;padding:14px 0;border-top:1px solid var(--line)}
+.task:first-child{border-top:0;padding-top:4px}
+.check{width:44px;height:44px;border-radius:10px;border:2px solid var(--line);background:var(--surface);display:grid;place-items:center;transition:background .15s,border-color .15s}
+.check svg{width:22px;height:22px;opacity:0;transition:opacity .15s}
+.check.on{background:var(--good);border-color:var(--good)}
+.check.on svg{opacity:1}
+.check.auto{cursor:default}
+.tname{font-weight:600;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}
+.tname small{font-weight:400;color:var(--muted);font-size:13px}
+.tbody{display:grid;gap:8px}
+.field{width:100%;border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:7px 10px;font-size:14px}
+.field::placeholder{color:var(--muted)}
+
+.cups{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.cup{width:28px;height:36px;border:2px solid var(--water);border-radius:3px 3px 7px 7px;background:transparent;padding:0;position:relative;overflow:hidden}
+.cup::after{content:"";position:absolute;inset:auto 0 0 0;height:0;background:var(--water);transition:height .2s}
+.cup.full::after{height:100%}
+.counter{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.step{width:34px;height:34px;border-radius:8px;border:1px solid var(--line);background:var(--surface);font-size:17px;line-height:1}
+.counter input{width:64px;text-align:center}
+.readout{font:500 14px/1 var(--mono);color:var(--muted)}
+.readout b{color:var(--ink);font-weight:500}
+
+.notes{margin-top:14px;display:grid;gap:6px}
+.notes label{font-size:13px;color:var(--muted)}
+textarea.field{min-height:64px;resize:vertical;font-family:var(--sans)}
+
+/* grid */
+.grid{display:grid;grid-template-columns:repeat(15,minmax(0,1fr));gap:4px;margin-top:14px}
+.cell{aspect-ratio:1;max-width:100%;border-radius:4px;border:1px solid transparent;background:var(--sunk);font:500 10px/1 var(--mono);color:var(--muted);display:grid;place-items:center;padding:0}
+.cell.done{background:var(--good);color:#fff}
+.cell.miss{background:var(--bad-soft);color:var(--bad);border-color:var(--bad)}
+.cell.part{background:var(--accent-soft);color:var(--accent)}
+.cell.future{background:transparent;border:1px dashed var(--line);cursor:default}
+.cell.today{outline:2px solid var(--ink);outline-offset:1px}
+.cell.sel{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--accent)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:12px;font-size:12px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:11px;height:11px;border-radius:3px;display:inline-block}
+
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 18px;margin-top:14px}
+.stat .v{font:700 34px/1 var(--display);letter-spacing:.01em}
+.stat .v small{font:500 13px var(--sans);color:var(--muted);margin-left:4px}
+.stat .l{font-size:13px;color:var(--muted);margin-top:4px}
+
+/* rules + settings */
+.rules{margin:12px 0 0;padding:0;list-style:none;display:grid;gap:8px;font-size:14px}
+.rules li{display:grid;grid-template-columns:22px 1fr;gap:8px}
+.rules li span{font:500 12px/1.6 var(--mono);color:var(--muted)}
+details.panel summary{cursor:pointer;font:700 20px/1 var(--display);text-transform:uppercase;letter-spacing:.03em;list-style:none;display:flex;justify-content:space-between}
+details.panel summary::after{content:"+";color:var(--muted)}
+details[open].panel summary::after{content:"−"}
+.set{display:grid;gap:14px;margin-top:14px}
+.set label{display:grid;gap:4px;font-size:13px;color:var(--muted)}
+.confirm{border:1px solid var(--bad);border-radius:8px;padding:12px;display:grid;gap:10px;background:var(--bad-soft)}
+.confirm p{margin:0}
+.attempts{font-size:13px;color:var(--muted);margin:0;padding-left:18px}
+/* photos */
+.thumbs{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.thumb{position:relative;width:76px;height:96px;border-radius:8px;overflow:hidden;border:1px solid var(--line);background:var(--sunk);padding:0}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb.broken::after{content:"Missing";position:absolute;inset:0;display:grid;place-items:center;font-size:11px;color:var(--muted)}
+.thumb .x{position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;border:0;background:rgba(0,0,0,.6);color:#fff;font-size:14px;line-height:22px;padding:0}
+.add{width:76px;height:96px;border-radius:8px;border:2px dashed var(--line);display:grid;place-items:center;text-align:center;font-size:12px;color:var(--muted);cursor:pointer;padding:6px}
+.add:hover,.add:focus-within{border-color:var(--accent);color:var(--accent)}
+.add input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.add b{display:block;font-size:22px;line-height:1;font-weight:500}
+.msg{font-size:13px;color:var(--muted)}
+.msg.bad{color:var(--bad)}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.compare figure{margin:0;display:grid;gap:6px}
+.compare button{padding:0;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--sunk);aspect-ratio:3/4;max-width:100%}
+.compare img{width:100%;height:100%;object-fit:cover;display:block}
+.compare figcaption{font:500 12px/1 var(--mono);color:var(--muted)}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px;margin-top:12px}
+.gallery button{position:relative;padding:0;border:0;border-radius:6px;overflow:hidden;aspect-ratio:3/4;background:var(--sunk);max-width:100%}
+.gallery img{width:100%;height:100%;object-fit:cover;display:block}
+.gallery span{position:absolute;left:4px;bottom:4px;font:500 10px/1 var(--mono);background:rgba(0,0,0,.6);color:#fff;padding:3px 4px;border-radius:3px}
+.lightbox{position:fixed;inset:0;z-index:50;background:rgba(8,10,12,.97);display:grid;grid-template-rows:auto 1fr auto;padding:calc(12px + env(safe-area-inset-top,0px)) 16px calc(12px + env(safe-area-inset-bottom,0px))}
+.lightbox .lbtop{display:flex;justify-content:space-between;align-items:center;color:#fff;font:700 22px/1 var(--display);letter-spacing:.03em;text-transform:uppercase}
+.lightbox .lbtop small{font:400 13px var(--sans);color:#bbb;text-transform:none;letter-spacing:0;margin-left:8px}
+.lightbox img{max-width:100%;max-height:100%;object-fit:contain;margin:auto;display:block;min-height:0}
+.lightbox .stage{display:grid;min-height:0;padding-block:12px}
+.lightbox .lbnav{display:flex;justify-content:center;gap:10px}
+.lightbox button{border:1px solid #555;background:#1c1f24;color:#fff;border-radius:8px;padding:8px 16px}
+.foot{color:var(--muted);font-size:12px;text-align:center}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+
+<div class="wrap" id="app"></div>
+
+<script>
+(() => {
+const GOAL = {water:128, pages:10};
+const LS_KEY = 'hard75.v1';
+const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+
+/* ---------- dates ---------- */
+const pad = n => String(n).padStart(2,'0');
+const iso = d => d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const todayISO = () => iso(new Date());
+const toUTC = s => { const [y,m,d]=s.split('-').map(Number); return Date.UTC(y,m-1,d); };
+const addDays = (s,n) => { const t=new Date(toUTC(s)+n*864e5); return t.getUTCFullYear()+'-'+pad(t.getUTCMonth()+1)+'-'+pad(t.getUTCDate()); };
+const fmt = (s,opts) => new Date(toUTC(s)).toLocaleDateString(undefined,Object.assign({timeZone:'UTC'},opts||{month:'short',day:'numeric'}));
+const dayNumFor = start => Math.round((toUTC(todayISO())-toUTC(start))/864e5)+1;
+
+/* ---------- state ---------- */
+const blankDay = () => ({w1:false,w1n:'',w2:false,w2n:'',diet:false,photo:false,bible:false,biblen:'',water:0,pages:0,note:'',photos:[]});
+const fresh = () => ({v:1,startDate:todayISO(),book:'',days:{},attempts:[]});
+function normalize(s){
+  const n = fresh();
+  if (!s || typeof s!=='object') return n;
+  if (typeof s.startDate==='string' && /^\d{4}-\d{2}-\d{2}$/.test(s.startDate)) n.startDate=s.startDate;
+  if (typeof s.book==='string') n.book=s.book;
+  if (s.days && typeof s.days==='object') for (const k in s.days){ const d=n.days[k]=Object.assign(blankDay(),s.days[k]); d.photos=Array.isArray(d.photos)?d.photos.filter(x=>typeof x==='string').slice(0,6):[]; }
+  if (Array.isArray(s.attempts)) n.attempts=s.attempts.slice(-50);
+  return n;
+}
+let state;
+try { state = normalize(JSON.parse(localStorage.getItem(LS_KEY))); } catch(e){ state = fresh(); }
+const clone = o => JSON.parse(JSON.stringify(o));
+
+const getDay = n => state.days[n] || blankDay();
+const ensureDay = n => (state.days[n] ||= blankDay());
+const doneCount = d => [d.w1,d.w2,d.diet,d.photo,d.bible,d.water>=GOAL.water,d.pages>=GOAL.pages].filter(Boolean).length;
+const complete = d => doneCount(d)===7;
+const touched = d => doneCount(d)>0 || d.water>0 || d.pages>0 || d.w1n || d.w2n || d.biblen || d.note || d.photos.length;
+
+/* ---------- persistence (on this device) ---------- */
+let photoMsg='', photoBad=false, uploading=false, lb=null, confirmDel=null, confirmImport=null, backupMsg='';
+let saveErr=false;
+function save(){
+  try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); saveErr=false; }catch(e){ saveErr=true; }
+  renderStatus();
+}
+/* Photos live in IndexedDB as JPEG blobs, keyed by id. */
+const photoStore = typeof indexedDB!=='undefined';
+const idb=(()=>{
+  let p;
+  const open=()=>p||(p=new Promise((res,rej)=>{ const r=indexedDB.open('hard75',1); r.onupgradeneeded=()=>r.result.createObjectStore('photos'); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }));
+  const tx=(mode,fn)=>open().then(db=>new Promise((res,rej)=>{ const t=db.transaction('photos',mode); fn(t.objectStore('photos')); t.oncomplete=()=>res(); t.onerror=()=>rej(t.error); t.onabort=()=>rej(t.error); }));
+  return {
+    put:(id,blob)=>tx('readwrite',s=>s.put(blob,id)),
+    del:id=>tx('readwrite',s=>s.delete(id)),
+    clear:()=>tx('readwrite',s=>s.clear()),
+    all:()=>open().then(db=>new Promise((res,rej)=>{ const out={}; const c=db.transaction('photos').objectStore('photos').openCursor(); c.onsuccess=()=>{ const cur=c.result; if(cur){ out[cur.key]=cur.value; cur.continue(); } else res(out); }; c.onerror=()=>rej(c.error); }))
+  };
+})();
+const urls={}; let photosLoaded=false;
+function loadPhotos(){
+  if(!photoStore){ photosLoaded=true; return Promise.resolve(); }
+  return idb.all().then(all=>{ for(const id in all) urls[id]=URL.createObjectURL(all[id]); }).catch(()=>{}).finally(()=>{ photosLoaded=true; render(); });
+}
+if(navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(()=>{});
+
+/* ---------- ui state ---------- */
+let sel=null, confirmRestart=false, confirmReset=false, lbList=[];
+
+const esc = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function view(){
+  const today=dayNumFor(state.startDate);
+  const cur=Math.min(Math.max(today,1),75);
+  if(sel==null || sel>cur) sel=cur;
+  let firstMiss=null;
+  for(let n=1;n<Math.min(today,76);n++){ if(!complete(getDay(n))){ firstMiss=n; break; } }
+  let streak=0;
+  { let n=Math.min(today,75); if(n>=1 && !complete(getDay(n))) n--; while(n>=1 && complete(getDay(n))){ streak++; n--; } }
+  let done=0,pages=0,water=0,workouts=0,chapters=0;
+  for(let n=1;n<=75;n++){ const d=state.days[n]; if(!d) continue; if(complete(d)) done++; pages+=+d.pages||0; water+=+d.water||0; workouts+=(d.w1?1:0)+(d.w2?1:0); chapters+=d.bible?1:0; }
+  return {today,cur,firstMiss,streak,done,pages,water,workouts,chapters};
+}
+
+function render(){
+  const v=view(), app=document.getElementById('app');
+  const d=getDay(sel), dc=doneCount(d);
+  const dateOf=n=>addDays(state.startDate,n-1);
+  const notStarted=v.today<1, finished=v.today>75;
+
+  let banner='';
+  if(notStarted){
+    banner=`<div class="banner win"><p><strong>Day 1 starts ${esc(fmt(state.startDate,{weekday:'long',month:'long',day:'numeric'}))}.</strong>Change the start date in Settings if you want to begin sooner.</p></div>`;
+  } else if(v.firstMiss){
+    banner=confirmRestart
+      ? `<div class="banner"><p><strong>Restart at Day 1 today?</strong>Your current log and photos are cleared. This attempt is kept in your history.</p><div class="row"><button class="btn ghost" data-act="cancel-restart">Cancel</button><button class="btn danger" data-act="do-restart">Restart now</button></div></div>`
+      : `<div class="banner"><p><strong>Day ${v.firstMiss} isn't complete.</strong>The rule is that any missed task sends you back to Day 1. If you did everything and forgot to log it, fill it in.</p><div class="row"><button class="btn" data-act="goto" data-n="${v.firstMiss}">Log Day ${v.firstMiss}</button><button class="btn danger" data-act="ask-restart">Restart at Day 1</button></div></div>`;
+  } else if(finished || (v.today===75 && complete(getDay(75)))){
+    banner=`<div class="banner win"><p><strong>75 of 75. You finished.</strong>Every task, every day, no exceptions.</p></div>`;
+  }
+
+  const task=(k,name,sub,extra)=>`
+    <li class="task">
+      <button class="check ${d[k]?'on':''}" data-act="toggle" data-k="${k}" aria-pressed="${!!d[k]}" aria-label="${esc(name)}">${CHECK}</button>
+      <div class="tbody"><div class="tname">${name}<small>${sub}</small></div>${extra||''}</div>
+    </li>`;
+  const cups=Array.from({length:8},(_,i)=>`<button class="cup ${d.water>=(i+1)*16?'full':''}" data-act="cup" data-i="${i}" aria-label="${(i+1)*16} ounces"></button>`).join('');
+  const waterOn=d.water>=GOAL.water, pagesOn=d.pages>=GOAL.pages;
+
+  const cells=Array.from({length:75},(_,i)=>{
+    const n=i+1, dd=state.days[n], c=dd&&complete(dd);
+    let cls='cell';
+    if(n>v.today) cls+=' future';
+    else if(c) cls+=' done';
+    else if(n<v.today) cls+=' miss';
+    else if(dd&&touched(dd)) cls+=' part';
+    if(n===v.today) cls+=' today';
+    if(n===sel) cls+=' sel';
+    return `<button class="${cls}" data-act="goto" data-n="${n}" ${n>v.today?'disabled':''} aria-label="Day ${n}">${n}</button>`;
+  }).join('');
+
+  const img=id=>urls[id]||'';
+  const thumbs=d.photos.map((id,i)=>`<div class="thumb"><button style="all:unset;display:block;width:100%;height:100%;cursor:zoom-in" data-act="lb" data-n="${sel}" data-i="${i}" aria-label="View photo ${i+1}"><img src="${img(id)}" alt="Day ${sel} progress photo ${i+1}" loading="lazy"></button>${photoStore?`<button class="x" data-act="ask-del" data-i="${i}" aria-label="Remove photo">×</button>`:''}</div>`).join('');
+  const canAdd=photoStore && d.photos.length<6 && !uploading;
+  const delConfirm=confirmDel&&confirmDel.n===sel?`<div class="confirm"><p>Delete this photo for good?</p><div class="row"><button class="btn ghost" data-act="cancel-del">Keep it</button><button class="btn danger" data-act="do-del">Delete photo</button></div></div>`:'';
+  const photoExtra=`<div class="thumbs">${thumbs}${canAdd?`<label class="add" for="photofile"><span><b>+</b>Add photo</span><input type="file" id="photofile" accept="image/*"></label>`:''}</div>${delConfirm}${uploading?'<div class="msg">Uploading…</div>':photoMsg?`<div class="msg ${photoBad?'bad':''}">${esc(photoMsg)}</div>`:''}${!photoStore?'<div class="msg">This browser can\'t save photos.</div>':''}`;
+
+  const all=[]; for(let n=1;n<=75;n++){ const dd=state.days[n]; if(dd) dd.photos.forEach((id,i)=>all.push({n,i,id})); }
+  const first=all[0], last=all[all.length-1];
+  const galleryPanel=`<section class="panel" aria-label="Progress photos"><h2>Progress photos</h2>${all.length?`
+    ${all.length>1&&first.n!==last.n?`<div class="compare">
+      <figure><button data-act="lb" data-n="${first.n}" data-i="${first.i}"><img src="${img(first.id)}" alt="Day ${first.n}" loading="lazy"></button><figcaption>DAY ${first.n}</figcaption></figure>
+      <figure><button data-act="lb" data-n="${last.n}" data-i="${last.i}"><img src="${img(last.id)}" alt="Day ${last.n}" loading="lazy"></button><figcaption>DAY ${last.n}</figcaption></figure>
+    </div>`:''}
+    <div class="gallery">${all.slice().reverse().map(p=>`<button data-act="lb" data-n="${p.n}" data-i="${p.i}" aria-label="Day ${p.n} photo"><img src="${img(p.id)}" alt="" loading="lazy"><span>${p.n}</span></button>`).join('')}</div>`
+    :'<p class="msg" style="margin:12px 0 0">Add a photo to today\'s checklist. Your first and latest photos show here side by side.</p>'}</section>`;
+
+  let lightbox='';
+  if(lb){
+    const idx=all.findIndex(p=>p.n===lb.n&&p.i===lb.i);
+    if(idx<0) lb=null; else { const p=all[idx];
+      lightbox=`<div class="lightbox" role="dialog" aria-modal="true" aria-label="Day ${p.n} photo"><div class="lbtop"><span>Day ${p.n}<small>${esc(fmt(dateOf(p.n),{weekday:'short',month:'short',day:'numeric'}))}</small></span><button data-act="lb-close" id="lbclose">Close</button></div><div class="stage"><img src="${img(p.id)}" alt="Day ${p.n} progress photo"></div><div class="lbnav"><button data-act="lb-go" data-to="${idx-1}" ${idx<=0?'disabled':''}>‹ Earlier</button><button data-act="lb-go" data-to="${idx+1}" ${idx>=all.length-1?'disabled':''}>Later ›</button></div></div>`; }
+  }
+  lbList=all;
+
+  const endDate=addDays(state.startDate,74);
+  app.innerHTML=`
+  <header class="top">
+    <div>
+      <div class="eyebrow">75 Hard</div>
+      <div class="big"><span class="day num">${notStarted?'DAY 0':'DAY '+v.cur}</span><span class="of">/ 75</span></div>
+    </div>
+    <div class="meta">
+      <div class="dates">${esc(fmt(state.startDate))} → ${esc(fmt(endDate,{month:'short',day:'numeric',year:'numeric'}))}</div>
+      <div class="status" id="status"></div>
+    </div>
+  </header>
+  <div class="bar" aria-hidden="true"><b style="width:${(v.done/75*100).toFixed(1)}%"></b></div>
+  ${banner}
+  <div class="cols">
+    <section class="panel" aria-label="Daily checklist">
+      <div class="dayhead">
+        <div>
+          <h2>Day ${sel}${sel===v.today?' · Today':''}</h2>
+          <div class="sub">${esc(fmt(dateOf(sel),{weekday:'long',month:'long',day:'numeric'}))} &nbsp;<span class="chip ${dc===7?'good':(sel<v.today?'bad':'')}">${dc===7?'Complete':dc+' of 7 done'}</span></div>
+        </div>
+        <div class="nav">
+          <button data-act="prev" ${sel<=1?'disabled':''} aria-label="Previous day">‹</button>
+          <button data-act="next" ${sel>=v.cur?'disabled':''} aria-label="Next day">›</button>
+        </div>
+      </div>
+      <ul class="tasks">
+        ${task('w1','Workout 1','45 min, anywhere',`<input class="field" id="w1n" data-k="w1n" maxlength="80" placeholder="What did you do? e.g. Push day, gym" value="${esc(d.w1n)}">`)}
+        ${task('w2','Workout 2','45 min, outdoors',`<input class="field" id="w2n" data-k="w2n" maxlength="80" placeholder="Outdoor session, e.g. 3 mile walk" value="${esc(d.w2n)}">`)}
+        <li class="task">
+          <button class="check auto ${waterOn?'on':''}" tabindex="-1" aria-hidden="true">${CHECK}</button>
+          <div class="tbody"><div class="tname">Water<small>1 gallon · 128 oz</small></div>
+            <div class="cups">${cups}<span class="readout num"><b>${d.water}</b> / 128 oz</span></div>
+            <div class="row"><button class="btn" data-act="water" data-d="-8">−8 oz</button><button class="btn" data-act="water" data-d="8">+8 oz</button><button class="btn" data-act="water" data-d="16">+16 oz</button></div>
+          </div>
+        </li>
+        <li class="task">
+          <button class="check auto ${pagesOn?'on':''}" tabindex="-1" aria-hidden="true">${CHECK}</button>
+          <div class="tbody"><div class="tname">Read 10 pages<small>Nonfiction${state.book?' · '+esc(state.book):''}</small></div>
+            <div class="counter"><button class="step" data-act="pages" data-d="-1" aria-label="One page fewer">−</button><input class="field num" id="pages" type="number" min="0" max="999" inputmode="numeric" value="${d.pages}" aria-label="Pages read"><button class="step" data-act="pages" data-d="1" aria-label="One more page">+</button><button class="btn" data-act="pages" data-d="10">+10</button><span class="readout num"><b>${d.pages}</b> / 10 pages</span></div>
+          </div>
+        </li>
+        ${task('bible','Bible','Read 1 chapter',`<input class="field" id="biblen" data-k="biblen" maxlength="60" placeholder="Which chapter? e.g. John 3" value="${esc(d.biblen)}">`)}
+        ${task('diet','Diet','Stick to it · no alcohol, no cheat meals')}
+        ${task('photo','Progress photo','One picture, every day',photoExtra)}
+      </ul>
+      <div class="notes"><label for="note">Notes for Day ${sel}</label><textarea class="field" id="note" data-k="note" maxlength="1000" placeholder="How did today go?">${esc(d.note)}</textarea></div>
+    </section>
+
+    <div class="side">
+      <section class="panel" aria-label="75 day calendar">
+        <h2>The 75</h2>
+        <div class="grid">${cells}</div>
+        <div class="legend">
+          <span><i style="background:var(--good)"></i>Complete</span>
+          <span><i style="background:var(--accent-soft)"></i>In progress</span>
+          <span><i style="background:var(--bad-soft);border:1px solid var(--bad)"></i>Missed</span>
+          <span><i style="border:1px dashed var(--line)"></i>Ahead</span>
+        </div>
+      </section>
+      ${galleryPanel}
+      <section class="panel" aria-label="Totals">
+        <h2>Totals</h2>
+        <div class="stats">
+          <div class="stat"><div class="v num">${v.done}<small>/ 75</small></div><div class="l">Days complete</div></div>
+          <div class="stat"><div class="v num">${v.streak}<small>days</small></div><div class="l">Current streak</div></div>
+          <div class="stat"><div class="v num">${v.workouts}</div><div class="l">Workouts logged</div></div>
+          <div class="stat"><div class="v num">${v.pages}<small>pages</small></div><div class="l">Read so far</div></div>
+          <div class="stat"><div class="v num">${(v.water/128).toFixed(1)}<small>gal</small></div><div class="l">Water</div></div>
+          <div class="stat"><div class="v num">${v.chapters}<small>chapters</small></div><div class="l">Bible read</div></div>
+        </div>
+      </section>
+      <details class="panel" id="settings" ${confirmReset||confirmImport||backupMsg?'open':''}>
+        <summary>Settings</summary>
+        <div class="set">
+          <label>Start date (Day 1)<input class="field" type="date" id="start" value="${esc(state.startDate)}"></label>
+          <label>Current book<input class="field" id="book" maxlength="80" placeholder="e.g. Can't Hurt Me" value="${esc(state.book)}"></label>
+          ${confirmReset
+            ? `<div class="confirm"><p>Erase every logged day and photo and start fresh from today?</p><div class="row"><button class="btn ghost" data-act="cancel-reset">Cancel</button><button class="btn danger" data-act="do-reset">Erase and start over</button></div></div>`
+            : `<div><button class="btn" data-act="ask-reset">Start over…</button></div>`}
+          <div class="bk"><div class="eyebrow" style="margin-bottom:6px">Backup</div>
+            <p class="msg" style="margin:0 0 8px">Everything is saved on this phone only. Save a backup now and then, and use it to move to a new phone.</p>
+            <div class="row"><button class="btn" data-act="backup">Save backup</button><label class="btn" for="importfile" style="position:relative">Restore backup<input type="file" id="importfile" accept=".json,application/json" style="position:absolute;width:1px;height:1px;opacity:0"></label></div>
+            ${confirmImport?`<div class="confirm" style="margin-top:10px"><p>Replace everything on this phone with the backup from ${esc(confirmImport.when)}? It has ${confirmImport.days} logged days and ${confirmImport.photoCount} photos.</p><div class="row"><button class="btn ghost" data-act="cancel-import">Cancel</button><button class="btn danger" data-act="do-import">Replace with backup</button></div></div>`:''}
+            ${backupMsg?`<div class="msg" style="margin-top:8px">${esc(backupMsg)}</div>`:''}
+          </div>
+          ${state.attempts.length?`<div><div class="eyebrow" style="margin-bottom:6px">Past attempts</div><ul class="attempts">${state.attempts.slice().reverse().map(a=>`<li>${esc(fmt(a.start))}: reached Day ${a.reached}</li>`).join('')}</ul></div>`:''}
+        </div>
+      </details>
+      <section class="panel" aria-label="The rules">
+        <h2>The rules</h2>
+        <ul class="rules">
+          <li><span>1</span>Two 45-minute workouts. One of them outside.</li>
+          <li><span>2</span>Follow a diet. No alcohol, no cheat meals.</li>
+          <li><span>3</span>Drink a gallon of water.</li>
+          <li><span>4</span>Read 10 pages of a nonfiction book.</li>
+          <li><span>5</span>Read 1 chapter of the Bible.</li>
+          <li><span>6</span>Take a progress photo.</li>
+          <li><span>7</span>Miss anything and you start over at Day 1.</li>
+        </ul>
+      </section>
+    </div>
+  </div>
+  <div class="foot">Unofficial tracker for the 75 Hard challenge.</div>${lightbox}`;
+  if(lb){ const c=document.getElementById('lbclose'); if(c) c.focus({preventScroll:true}); }
+  renderStatus();
+}
+
+function renderStatus(){
+  const el=document.getElementById('status'); if(!el) return;
+  el.className='status'+(saveErr?' err':' cloud');
+  el.innerHTML='<i></i>'+(saveErr?'Not saved, phone storage is full':'Saved on this device');
+}
+
+function restart(){
+  const v=view();
+  state.attempts.push({start:state.startDate,reached:Math.max(0,(v.firstMiss||v.cur)-1)});
+  state.startDate=todayISO(); state.days={}; sel=1;
+  if(photoStore) idb.clear().catch(()=>{}); for(const id in urls){ URL.revokeObjectURL(urls[id]); delete urls[id]; }
+}
+
+/* ---------- events ---------- */
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]'); if(!b||b.disabled) return;
+  const act=b.dataset.act, v=view();
+  const d=()=>ensureDay(sel);
+  switch(act){
+    case 'toggle': d()[b.dataset.k]=!d()[b.dataset.k]; break;
+    case 'cup': { const amt=(+b.dataset.i+1)*16; d().water = d().water===amt ? amt-16 : amt; break; }
+    case 'water': d().water=Math.max(0,Math.min(256,d().water+ +b.dataset.d)); break;
+    case 'pages': d().pages=Math.max(0,Math.min(999,(+d().pages||0)+ +b.dataset.d)); break;
+    case 'goto': sel=+b.dataset.n; photoMsg=''; confirmDel=null; render(); return;
+    case 'lb': lb={n:+b.dataset.n,i:+b.dataset.i}; render(); return;
+    case 'lb-close': lb=null; render(); return;
+    case 'lb-go': { const p=lbList[+b.dataset.to]; if(p){ lb={n:p.n,i:p.i}; render(); } return; }
+    case 'ask-del': confirmDel={n:sel,i:+b.dataset.i}; render(); return;
+    case 'cancel-del': confirmDel=null; render(); return;
+    case 'do-del': {
+      const dd=ensureDay(confirmDel.n), id=dd.photos[confirmDel.i]; confirmDel=null;
+      if(!id){ render(); return; }
+      dd.photos=dd.photos.filter(x=>x!==id);
+      if(!dd.photos.length) dd.photo=false;
+      photoMsg='Photo deleted.'; photoBad=false;
+      if(photoStore) idb.del(id).catch(()=>{}); if(urls[id]){ URL.revokeObjectURL(urls[id]); delete urls[id]; }
+      break; }
+    case 'prev': sel=Math.max(1,sel-1); photoMsg=''; confirmDel=null; render(); return;
+    case 'next': sel=Math.min(v.cur,sel+1); photoMsg=''; confirmDel=null; render(); return;
+    case 'ask-restart': confirmRestart=true; render(); return;
+    case 'cancel-restart': confirmRestart=false; render(); return;
+    case 'do-restart': confirmRestart=false; restart(); break;
+    case 'ask-reset': confirmReset=true; render(); return;
+    case 'cancel-reset': confirmReset=false; render(); return;
+    case 'do-reset': confirmReset=false; state=Object.assign(fresh(),{book:state.book}); sel=1; if(photoStore) idb.clear().catch(()=>{}); for(const id in urls){ URL.revokeObjectURL(urls[id]); delete urls[id]; } break;
+    case 'backup': makeBackup(); return;
+    case 'cancel-import': confirmImport=null; render(); return;
+    case 'do-import': applyImport(); return;
+    default: return;
+  }
+  save(); render();
+});
+document.addEventListener('input',e=>{
+  const t=e.target;
+  if(t.dataset && (t.dataset.k==='w1n'||t.dataset.k==='w2n'||t.dataset.k==='biblen'||t.dataset.k==='note')){ ensureDay(sel)[t.dataset.k]=t.value; save(); }
+  else if(t.id==='book'){ state.book=t.value; save(); }
+});
+document.addEventListener('error',e=>{ const t=e.target; if(t&&t.tagName==='IMG'&&photosLoaded){ const th=t.closest('.thumb'); if(th){ th.classList.add('broken'); t.remove(); } } },true);
+document.addEventListener('keydown',e=>{
+  if(!lb) return;
+  if(e.key==='Escape'){ lb=null; render(); }
+  else if(e.key==='ArrowLeft'||e.key==='ArrowRight'){ const idx=lbList.findIndex(p=>p.n===lb.n&&p.i===lb.i)+(e.key==='ArrowLeft'?-1:1); const p=lbList[idx]; if(p){ lb={n:p.n,i:p.i}; render(); } }
+});
+
+/* Shrink to a JPEG (max 1600px) before upload: keeps storage small and converts formats the store doesn't take. */
+function shrink(file){
+  return new Promise((res,rej)=>{
+    const url=URL.createObjectURL(file), im=new Image();
+    im.onload=()=>{
+      const k=Math.min(1,1600/Math.max(im.naturalWidth,im.naturalHeight));
+      const c=document.createElement('canvas'); c.width=Math.round(im.naturalWidth*k); c.height=Math.round(im.naturalHeight*k);
+      c.getContext('2d').drawImage(im,0,0,c.width,c.height); URL.revokeObjectURL(url);
+      c.toBlob(b=>b?res(b):rej(new Error('encode')),'image/jpeg',0.85);
+    };
+    im.onerror=()=>{ URL.revokeObjectURL(url); rej(new Error('decode')); };
+    im.src=url;
+  });
+}
+const UPLOAD_ERR={too_large:'That photo is too big. Try a smaller one.',unsupported_type:'That file type isn\'t supported. Use a JPG or PNG.',quota_or_state:'Your phone is out of space for photos. Delete some old ones and try again.',rate_limited:'Too many uploads at once. Wait a moment and try again.',upstream_auth:'Your sign-in expired. Reload the page and try again.'};
+async function uploadPhoto(file){
+  const n=sel; uploading=true; photoMsg=''; render();
+  try{
+    let blob; try{ blob=await shrink(file); }catch(e){ throw {code:'unsupported_type'}; }
+    const id='p'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+    try{ await idb.put(id,blob); }catch(e){ throw {code:'quota_or_state'}; }
+    urls[id]=URL.createObjectURL(blob);
+    const dd=ensureDay(n); dd.photos=dd.photos.concat(id).slice(0,6); dd.photo=true;
+    photoMsg='Photo saved to Day '+n+'.'; photoBad=false; save();
+  }catch(e){
+    photoMsg=UPLOAD_ERR[e&&e.code]||'The upload didn\'t go through. Try again.'; photoBad=true;
+  }finally{ uploading=false; render(); }
+}
+
+document.addEventListener('change',e=>{
+  const t=e.target;
+  if(t.id==='importfile'){ const f=t.files&&t.files[0]; if(f) readImport(f); return; }
+  if(t.id==='photofile'){ const f=t.files&&t.files[0]; if(f&&photoStore) uploadPhoto(f); return; }
+  if(t.id==='pages'){ ensureDay(sel).pages=Math.max(0,Math.min(999,parseInt(t.value,10)||0)); save(); render(); }
+  else if(t.id==='start' && /^\d{4}-\d{2}-\d{2}$/.test(t.value)){ state.startDate=t.value; sel=null; save(); render(); }
+  else if(t.id==='book'){ render(); }
+});
+
+/* ---------- backup ---------- */
+const blobToDataURL=b=>new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=()=>rej(r.error); r.readAsDataURL(b); });
+async function makeBackup(){
+  backupMsg='Preparing backup…'; render();
+  try{
+    const all=photoStore?await idb.all():{}; const photos={};
+    for(const id in all) photos[id]=await blobToDataURL(all[id]);
+    const data=JSON.stringify({app:'hard75',v:1,saved:new Date().toISOString(),state,photos});
+    const name='75-hard-backup-'+todayISO()+'.json';
+    const file=new File([data],name,{type:'application/json'});
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      try{ await navigator.share({files:[file],title:'75 Hard backup'}); backupMsg='Backup ready. Save it to Files, iCloud Drive or Google Drive.'; }
+      catch(e){ backupMsg= e && e.name==='AbortError' ? '' : 'Couldn\'t share the backup. Try again.'; }
+    } else {
+      const a=document.createElement('a'); a.href=URL.createObjectURL(file); a.download=name; document.body.appendChild(a); a.click();
+      setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },1000);
+      backupMsg='Backup saved to your downloads.';
+    }
+  }catch(e){ backupMsg='Couldn\'t make the backup. Try again.'; }
+  render();
+}
+function readImport(file){
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const b=JSON.parse(r.result);
+      if(!b || b.app!=='hard75' || !b.state) throw 0;
+      const st=normalize(b.state);
+      confirmImport={data:b, when:b.saved?new Date(b.saved).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}):'an earlier date', days:Object.values(st.days).filter(touched).length, photoCount:Object.keys(b.photos||{}).length};
+      backupMsg='';
+    }catch(e){ confirmImport=null; backupMsg='That file isn\'t a 75 Hard backup.'; }
+    render();
+  };
+  r.readAsText(file);
+}
+async function applyImport(){
+  const b=confirmImport.data; confirmImport=null; backupMsg='Restoring…'; render();
+  try{
+    if(photoStore){
+      await idb.clear();
+      for(const id in urls){ URL.revokeObjectURL(urls[id]); delete urls[id]; }
+      for(const id in (b.photos||{})){ const blob=await (await fetch(b.photos[id])).blob(); await idb.put(id,blob); urls[id]=URL.createObjectURL(blob); }
+    }
+    state=normalize(b.state); sel=null; save(); backupMsg='Backup restored.';
+  }catch(e){ backupMsg='Couldn\'t restore that backup. Your phone may be out of space.'; }
+  render();
+}
+
+/* re-render when the date rolls over */
+let lastDate=todayISO();
+setInterval(()=>{ const t=todayISO(); if(t!==lastDate){ lastDate=t; sel=null; render(); } },60000);
+
+render();
+loadPhotos();
+if('serviceWorker' in navigator && location.protocol==='https:') navigator.serviceWorker.register('sw.js').catch(()=>{});
+})();
+</script>
+
+</body>
+</html>
